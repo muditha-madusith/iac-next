@@ -95,23 +95,35 @@ jobs:
         run: |
           echo "${{ secrets.EC2_PRIVATE_KEY }}"
 
-      - name: SSH into EC2 and deploy (Prod)
-        uses: appleboy/ssh-action@v0.1.2
-        with:
-            host: ${{ secrets.PROD_EC2_IP }}
-            username: ubuntu
-            key: ${{ secrets.EC2_PRIVATE_KEY }}
-            port: 22
-            script: |
-                # Stop and remove existing Docker containers and images
-                sudo docker stop my-app-container || true
-                sudo docker rm my-app-container || true
-                sudo docker container prune -f
-                sudo docker image prune -f
+      - name: Pull and deploy Docker image to prod
+        run: |
+          ssh -i ${{ secrets.EC2_PRIVATE_KEY }} ubuntu@${{ secrets.PROD_EC2_IP }}
+          # Stop and remove existing Docker containers and images
+          sudo docker stop my-app-container || true
+          sudo docker rm my-app-container || true
+          sudo docker container prune -f
+          sudo docker image prune -f
 
-                sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:master
-                sudo docker run -d -p 3000:3000 --name my-app-container ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:master
-            debug: true
+          sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:master
+          sudo docker run -d -p 3000:3000 --name my-app-container ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:master
+
+    #   - name: SSH into EC2 and deploy (Prod)
+    #     uses: appleboy/ssh-action@v0.1.2
+    #     with:
+    #         host: ${{ secrets.PROD_EC2_IP }}
+    #         username: ubuntu
+    #         key: ${{ secrets.EC2_PRIVATE_KEY }}
+    #         port: 22
+    #         script: |
+    #             # Stop and remove existing Docker containers and images
+    #             sudo docker stop my-app-container || true
+    #             sudo docker rm my-app-container || true
+    #             sudo docker container prune -f
+    #             sudo docker image prune -f
+
+    #             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:master
+    #             sudo docker run -d -p 3000:3000 --name my-app-container ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:master
+    #         debug: true
 
       - name: Set up Nginx for port forwarding 
         run: |
