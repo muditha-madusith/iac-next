@@ -108,8 +108,13 @@ jobs:
             sudo docker run -d -p 3000:3000 --name my-app-container ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:master
           EOF
 
-      - name: Set up Nginx for port forwarding 
+      - name: Set up Nginx for port forwarding
+        env:
+            PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+            HOST_NAME: ${{ secrets.PROD_EC2_IP }}
         run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${HOST_NAME} << 'EOF'
             sudo tee /etc/nginx/sites-available/default << EOL
             server {
             listen 80;
@@ -127,3 +132,4 @@ jobs:
     
             # Restart Nginx to apply the changes-
             sudo systemctl restart nginx
+          EOF
