@@ -128,8 +128,8 @@ jobs:
                 proxy_set_header X-Forwarded-Proto \$scheme;
             }
             }
-            EOL
-    
-            # Restart Nginx to apply the changes-
-            sudo systemctl restart nginx
+
           EOF
+    
+          # Restart Nginx to apply the changes
+          sudo systemctl restart nginx
