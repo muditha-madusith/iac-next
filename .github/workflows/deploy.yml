@@ -97,7 +97,8 @@ jobs:
 
       - name: Pull and deploy Docker image to prod
         run: |
-          ssh -i ${{ secrets.EC2_PRIVATE_KEY }} ubuntu@${{ secrets.PROD_EC2_IP }}
+          sudo chmod 400 ${{ secrets.EC2_PRIVATE_KEY }}
+          sudo ssh -i ${{ secrets.EC2_PRIVATE_KEY }} ubuntu@${{ secrets.PROD_EC2_IP }}
           # Stop and remove existing Docker containers and images
           sudo docker stop my-app-container || true
           sudo docker rm my-app-container || true
