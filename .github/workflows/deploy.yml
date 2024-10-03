@@ -38,22 +38,27 @@ jobs:
   deploy-test:
     needs: build
     if: github.ref_name == 'test'
-    runs-on: self-hosted-test  # Tags this job to run on the test environment runner
+    runs-on: ubuntu-latest  
     steps:
       - name: Docker Login
         run: |
           sudo docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Pull and deploy Docker image to test
-        run: |
-          # Stop and remove existing Docker containers and images
-          sudo docker stop my-app-container || true
-          sudo docker rm my-app-container || true
-          sudo docker container prune -f
-          sudo docker image prune -f
+      - name: SSH into EC2 and deploy (Prod)
+        uses: appleboy/ssh-action@v0.1.2
+        with:
+            host: ${{ secrets.TEST_EC2_IP }}
+            username: ubuntu
+            key: ${{ secrets.EC2_PRIVATE_KEY }}
+            script: |
+                # Stop and remove existing Docker containers and images
+                sudo docker stop my-app-container || true
+                sudo docker rm my-app-container || true
+                sudo docker container prune -f
+                sudo docker image prune -f
 
-          sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:test
-          sudo docker run -d -p 3000:3000 --name my-app-container ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:test
+                sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:test
+                sudo docker run -d -p 3000:3000 --name my-app-container ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:test
 
       - name: Set up Nginx for port forwarding 
         run: |
@@ -84,16 +89,21 @@ jobs:
         run: |
           sudo docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Pull and deploy Docker image to prod
-        run: |
-          # Stop and remove existing Docker containers and images
-          sudo docker stop my-app-container || true
-          sudo docker rm my-app-container || true
-          sudo docker container prune -f
-          sudo docker image prune -f
+      - name: SSH into EC2 and deploy (Prod)
+        uses: appleboy/ssh-action@v0.1.2
+        with:
+            host: ${{ secrets.PROD_EC2_IP }}
+            username: ubuntu
+            key: ${{ secrets.EC2_PRIVATE_KEY }}
+            script: |
+                # Stop and remove existing Docker containers and images
+                sudo docker stop my-app-container || true
+                sudo docker rm my-app-container || true
+                sudo docker container prune -f
+                sudo docker image prune -f
 
-          sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:master
-          sudo docker run -d -p 3000:3000 --name my-app-container ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:master
+                sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:test
+                sudo docker run -d -p 3000:3000 --name my-app-container ${{ secrets.DOCKERHUB_USERNAME }}/opsdev:master
 
       - name: Set up Nginx for port forwarding 
         run: |
