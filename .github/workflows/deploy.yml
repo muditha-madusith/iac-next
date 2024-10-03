@@ -83,7 +83,7 @@ jobs:
   deploy-prod:
     needs: build
     if: github.ref_name == 'master'
-    runs-on: self-hosted-prod  # Tags this job to run on the prod environment runner
+    runs-on: ubuntu-latest  
     steps:
       - name: Docker Login
         run: |
