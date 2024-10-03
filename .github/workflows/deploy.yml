@@ -91,14 +91,13 @@ jobs:
         run: |
           sudo docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Print SSH key
-        run: |
-          echo "${{ secrets.EC2_PRIVATE_KEY }}"
-
       - name: Pull and deploy Docker image to prod
+        env:
+            PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+            HOST_NAME: ${{ secrets.PROD_EC2_IP }}
         run: |
-          sudo chmod 400 ${{ secrets.EC2_PRIVATE_KEY }}
-          sudo ssh -i ${{ secrets.EC2_PRIVATE_KEY }} ubuntu@${{ secrets.PROD_EC2_IP }}
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${HOST_NAME}
           # Stop and remove existing Docker containers and images
           sudo docker stop my-app-container || true
           sudo docker rm my-app-container || true
